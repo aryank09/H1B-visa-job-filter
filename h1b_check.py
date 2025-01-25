@@ -5,9 +5,26 @@ from datetime import datetime
 #url in the form of https://h1bdata.info/index.php?em=(company_name_goes_here)&job=&city=&year=2024
 #for now we will use amazon as dummy url
 
-def validity_checker(url):
-    url = "https://h1bdata.info/index.php?em=amazon+&year=2024"
+amazon_entities = [
+        "Amazon.com Services LLC",
+        "Amazon Web Services Inc",
+        "Amazon Data Services Inc",
+        "Amazon.com Services Inc"
+    ]
 
+def validity_checker(company_name):
+    print("here", company_name.lower())
+    if (company_name.lower() == "meta"):
+         url = "https://h1bdata.info/index.php?em=meta+platforms&year=2024"
+    elif(company_name.lower() == "amazon" or company_name.lower() in amazon_entities):
+         url = "https://h1bdata.info/index.php?em=amazon+&year=2024"
+    else:
+        base_url = "https://h1bdata.info/index.php?em="
+        company_name = company_name.lower()
+        url = f"{base_url}{company_name.replace(' ', '+')}&year=2024"
+
+    #url = "https://h1bdata.info/index.php?em=amazon+&year=2024"
+    
     response = requests.get(url)
     if response.status_code != 200:
             print(response.status_code)
