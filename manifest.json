@@ -3,13 +3,21 @@
     "name" : "H1B Visa Checker",
     "version" : "0.1",
     "description" : "A chrome extension to filter out jobs from companies that have not filled an H1B application in the past 1 year.",
+
     "action" : 
     {
         "default_popup" : "popup.html"
     },
+
     "background" : 
     {
         "service-worker" : "background.js"
     },
-    "permissions" : ["tabs", "activeTab", "scripting"]
+
+    "permissions" : ["tabs", "activeTab", "scripting"],
+    "content_scripts": [
+    {
+        "matches": ["*://*.linkedin.com/jobs/*"],
+        "js": ["content.js"]
+    }]   
 }
