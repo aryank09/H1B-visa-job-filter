@@ -56,3 +56,13 @@ def validity_checker(company_name):
         return True
     else:
         return False
+
+
+def company_name_scraper(url):
+    response = requests.get(url)
+    if response.status_code != 200:
+        print(response.status_code)
+        print("Failed to retrieve the webpage.")
+    
+    soup = BeautifulSoup(response.text, 'html.parser')
+    #TODO: Have to build scraping code to get company names from job cards
