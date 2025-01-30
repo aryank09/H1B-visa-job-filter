@@ -65,4 +65,18 @@ def company_name_scraper(url):
         print("Failed to retrieve the webpage.")
     
     soup = BeautifulSoup(response.text, 'html.parser')
-    #TODO: Have to build scraping code to get company names from job cards
+    
+    #The commented out code is for all the job listing on one page
+    # company_names = [a.get_text(strip=True) for a in soup.select("a.hidden-nested-link")]
+
+    # clean_company_names = [name for name in company_names if name != "******"]
+
+    # print(clean_company_names)
+
+    first_company = soup.select_one("a.hidden-nested-link")
+
+    if first_company:
+        company_name = first_company.get_text(strip=True)
+        return company_name
+    else:
+        return "No company name found."
