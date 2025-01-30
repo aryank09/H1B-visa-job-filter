@@ -13,7 +13,7 @@ amazon_entities = [
     ]
 
 def validity_checker(company_name):
-    print("here", company_name.lower())
+    print(company_name.lower())
     if (company_name.lower() == "meta"):
          url = "https://h1bdata.info/index.php?em=meta+platforms&year=2024"
     elif(company_name.lower() == "amazon" or company_name.lower() in amazon_entities):
@@ -53,30 +53,9 @@ def validity_checker(company_name):
 
     if difference < 365:
         #if applied less than 1 year
+        print(difference)
         return True
     else:
+        print(difference)
         return False
 
-
-def company_name_scraper(url):
-    response = requests.get(url)
-    if response.status_code != 200:
-        print(response.status_code)
-        print("Failed to retrieve the webpage.")
-    
-    soup = BeautifulSoup(response.text, 'html.parser')
-    
-    #The commented out code is for all the job listing on one page
-    # company_names = [a.get_text(strip=True) for a in soup.select("a.hidden-nested-link")]
-
-    # clean_company_names = [name for name in company_names if name != "******"]
-
-    # print(clean_company_names)
-
-    first_company = soup.select_one("a.hidden-nested-link")
-
-    if first_company:
-        company_name = first_company.get_text(strip=True)
-        return company_name
-    else:
-        return "No company name found."
