@@ -39,7 +39,7 @@ def validity_checker(company_name):
         submit_date = cells[4].get_text(strip=True) #using 4 index since submit date is in the index 4 position
     else:
         print("No data rows found.")
-        return None
+        return True
 
 
     today = datetime.today()
