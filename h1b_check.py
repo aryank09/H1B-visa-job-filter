@@ -1,3 +1,11 @@
+#h1b_check.py
+#
+#Description: This program scrapes h1b databse to check wether the given company name has applied for a h1b visa in the past 1 year
+#
+#@author Aryan Khanna
+#@version Feb 6, 2024
+
+#importing necessary modules
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -5,6 +13,7 @@ from datetime import datetime
 #url in the form of https://h1bdata.info/index.php?em=(company_name_goes_here)&job=&city=&year=2024
 #for now we will use amazon as dummy url
 
+#to ensure gone under one name because issue with link 
 amazon_entities = [
         "Amazon.com Services LLC",
         "Amazon Web Services Inc",
@@ -12,6 +21,16 @@ amazon_entities = [
         "Amazon.com Services Inc"
     ]
 
+#validity_check method
+#
+#Description: This method checks wether the company exists within the h1b database, if it does it returns true if the company has applied for a h1b visa in the past 1 year, else false
+#
+#PRE-CONDITIONS: The method should recieve company name
+#
+#POST-CONSITIONS: The returns True or false, (if comapny does not exist within the database it still returns true)
+#
+#@params company_name is a str
+#@return boolean, may be True or False
 def validity_checker(company_name):
     print(company_name.lower())
     if (company_name.lower() == "meta"):
@@ -41,7 +60,7 @@ def validity_checker(company_name):
         print("No data rows found.")
         return True
 
-
+    #getting date in the required format
     today = datetime.today()
     today = today.strftime("%m/%d/%Y")
 
