@@ -6,7 +6,7 @@
 // @match        https://www.linkedin.com/jobs/*
 // @grant        GM_xmlhttpRequest
 // @connect      localhost
-// @connect      127.0.0.1
+// @connect      {put your server address}
 // @connect      jsonplaceholder.typicode.com
 // @run-at       document-end
 // ==/UserScript==
@@ -14,7 +14,7 @@
 (function () {
     'use strict';
 
-    const apiUrl = "http://127.0.0.1:5000/scrape"; // Flask API
+    const apiUrl = "{put your server address}/scrape"; // Flask API
 
     function debugJobListings() {
         console.log("🔍 Extracting job listings...");
