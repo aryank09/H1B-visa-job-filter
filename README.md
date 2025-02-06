@@ -1,7 +1,7 @@
 # H1B Visa Checker Tampermonkey Script
 
 ## Overview
-The H1B Visa Checker Tampermonkey script is a tool designed to assist job seekers in filtering job listings on LinkedIn based on a company's H1B visa application history. The script checks if a company has applied for an H1B visa in the past year. If a company has not applied for an H1B visa recently, the script will hide job listings from that company while you browse LinkedIn job postings.
+The H1B Visa Checker Tampermonkey script is a tool designed to assist job seekers in filtering job listings on LinkedIn based on a company's H1B visa application history. The script checks if a company has applied for an H1B visa in the past year. If a company has not applied for an H1B visa recently, the script will hide job listings from that company while you browse LinkedIn job postings. Company's that do not exist in the h1b databse are not filtered.
 
 The script is powered by a Python backend that scrapes company names and checks them against the H1B visa databases using an API wrapper. The backend is responsible for gathering and validating H1B visa data, while the Tampermonkey script interacts with LinkedIn job postings.
 
