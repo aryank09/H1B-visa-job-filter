@@ -43,7 +43,7 @@
             return;
         }
 
-        // Send extracted job listings to `background.js`
+        //Send extracted job listings to `background.js`
         sendJobListingToBackground(jobData);
     }
 
@@ -105,12 +105,12 @@
         processNextJob(0);
     }
 
-    // Ensure script runs only once on page load
+    //Ensure script runs only once on page load
     window.onload = function () {
         debugJobListings();
     };
 
-    // Listen for the popup button click
+    //Listen for the popup button click
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         if (request.action === "startJobProcessing") {
             debugJobListings();

@@ -1,10 +1,10 @@
-const apiUrl = "your server address"; // Add your Flask API URL here
+const apiUrl = "your server address"; //Add your Flask API URL here
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "fetchH1BData") {
         const company = message.company;
 
-        // Send request to Flask API
+        //Send request to Flask API
         fetch(apiUrl, {
             method: "POST",
             headers: {
@@ -21,7 +21,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             sendResponse({ success: false });
         });
 
-        // Keep the message channel open until the response is received
+        //Keep the message channel open until the response is received
         return true;
     }
 });
