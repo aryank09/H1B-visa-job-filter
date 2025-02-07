@@ -11,7 +11,8 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 
 #url in the form of https://h1bdata.info/index.php?em=(company_name_goes_here)&job=&city=&year=2024
-#for now we will use amazon as dummy url
+
+#TODO: Need to figure out a way to keep hashmap in use for the entire session, instead of starting again
 
 #to ensure gone under one name because issue with link 
 amazon_entities = [
@@ -53,7 +54,6 @@ def validity_checker(company_name):
         base_url = "https://h1bdata.info/index.php?em="
         url = f"{base_url}{company_name.replace(' ', '+')}&year=2024"
 
-    #url = "https://h1bdata.info/index.php?em=amazon+&year=2024"
     
     response = requests.get(url)
     if response.status_code != 200:

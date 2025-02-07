@@ -1,42 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>H1B Visa Checker</title>
-  <style>
-    body
-    {
-      width: 250px;
-      padding: 10px;
-      font-family: Arial, sans-serif;
-    }
-    button
-    {
-      width: 100%;
-      padding: 10px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover
-    {
-      background-color: #45a049;
-    }
-    #status
-    {
-      margin-top: 10px;
-      font-size: 14px;
-      color: green;
-    }
-  </style>
+    <title>H1B Visa Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 10px;
+            width: 250px;
+        }
+        .switch-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #4CAF50;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+    </style>
 </head>
 <body>
-  <h3>H1B Visa Checker</h3>
-  <button id="startButton">Start Program</button>
-  <div id="status"></div>
+    <h3>H1B Visa Checker</h3>
 
-  <script src="popup.js"></script>
+    <div class="switch-container">
+        <span>Enable Filtering</span>
+        <label class="switch">
+            <input type="checkbox" id="toggleFilter">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <div class="switch-container">
+        <span>Hide Unknown Companies</span>
+        <label class="switch">
+            <input type="checkbox" id="toggleDatabaseFilter">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <script src="popup.js"></script>
 </body>
 </html>
