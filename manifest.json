@@ -1,19 +1,29 @@
 {
     "manifest_version": 3,
-    "name": "H1B Visa Job Filter",
+    "name": "H1B Visa Checker",
     "version": "1.0",
-    "description": "Hides job listings from companies that haven't applied for H1B visas recently.",
-    "permissions": ["storage", "scripting", "activeTab"],
-    "host_permissions": ["your server url"],
+    "description": "Checks if a company is sponsoring H1B visas based on job listings.",
+    "permissions": [
+      "activeTab",
+      "storage",
+      "tabs"
+    ],
     "background": {
       "service_worker": "background.js"
     },
     "content_scripts": [
       {
-        "matches": ["*://www.linkedin.com/jobs/*"],
-        "js": ["content.js"],
-        "run_at": "document_idle"
+        "matches": [
+          "https://www.linkedin.com/jobs/*"
+        ],
+        "js": ["content.js"]
       }
+    ],
+    "action": {
+      "default_popup": "popup.html"
+    },
+    "host_permissions": [
+      "https://www.linkedin.com/*"
     ]
   }
   

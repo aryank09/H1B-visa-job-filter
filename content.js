@@ -14,7 +14,7 @@
         const jobCards = document.querySelectorAll("li[id]");
         if (jobCards.length === 0) {
             console.warn("⚠️ No job listings found. Retrying...");
-            setTimeout(debugJobListings, 2000); //Retry after 2 seconds
+            setTimeout(debugJobListings, 2000); // Retry after 2 seconds
             return;
         }
 
@@ -33,7 +33,7 @@
                 jobData.push({
                     company: companyName,
                     jobTitle: jobTitle,
-                    jobElement: job //Store reference to the <li> element
+                    jobElement: job // Store reference to the <li> element
                 });
             }
         });
@@ -43,7 +43,7 @@
             return;
         }
 
-        //Send extracted job listings to `background.js`
+        // Send extracted job listings to `background.js`
         sendJobListingToBackground(jobData);
     }
 
@@ -63,7 +63,7 @@
         function processNextJob(index) {
             if (index >= jobData.length) {
                 console.log("✅ All jobs processed.");
-                return debugJobListings(); //Re-run to check new job postings
+                return debugJobListings(); // Re-run to check new job postings
             }
 
             const job = jobData[index];
@@ -105,8 +105,16 @@
         processNextJob(0);
     }
 
-    //Ensure script runs only once on page load
+    // Ensure script runs only once on page load
     window.onload = function () {
         debugJobListings();
     };
+
+    // Listen for the popup button click
+    chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+        if (request.action === "startJobProcessing") {
+            debugJobListings();
+            sendResponse({ success: true });
+        }
+    });
 })();

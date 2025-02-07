@@ -21,6 +21,9 @@ amazon_entities = [
         "Amazon.com Services Inc"
     ]
 
+#hashmap containing company names and boolean value for faster removal
+checked_companies = {}
+
 #validity_check method
 #
 #Description: This method checks wether the company exists within the h1b database, if it does it returns true if the company has applied for a h1b visa in the past 1 year, else false
@@ -32,14 +35,22 @@ amazon_entities = [
 #@params company_name is a str
 #@return boolean, may be True or False
 def validity_checker(company_name):
-    print(company_name.lower())
-    if (company_name.lower() == "meta"):
+
+    company_name = company_name.lower()
+
+    if company_name in amazon_entities:
+         company_name = "amazon"
+    
+    if company_name in checked_companies:
+         return checked_companies.get(company_name)
+
+    print(company_name)
+    if (company_name == "meta"):
          url = "https://h1bdata.info/index.php?em=meta+platforms&year=2024"
-    elif(company_name.lower() == "amazon" or company_name.lower() in amazon_entities):
+    elif(company_name == "amazon"):
          url = "https://h1bdata.info/index.php?em=amazon+&year=2024"
     else:
         base_url = "https://h1bdata.info/index.php?em="
-        company_name = company_name.lower()
         url = f"{base_url}{company_name.replace(' ', '+')}&year=2024"
 
     #url = "https://h1bdata.info/index.php?em=amazon+&year=2024"
@@ -73,8 +84,10 @@ def validity_checker(company_name):
     if difference < 365:
         #if applied less than 1 year
         print(difference)
+        checked_companies[company_name] = True
         return True
     else:
         print(difference)
+        checked_companies[company_name] = False
         return False
 
