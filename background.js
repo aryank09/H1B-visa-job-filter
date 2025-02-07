@@ -1,4 +1,4 @@
-const apiUrl = "http://127.0.0.1:5000/scrape"; //Add your Flask API URL here
+const apiUrl = "your server address"; //Add your Flask API URL here
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "fetchH1BData") {
