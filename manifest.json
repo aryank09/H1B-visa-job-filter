@@ -1,0 +1,29 @@
+{
+    "manifest_version": 3,
+    "name": "H1B Visa Checker",
+    "version": "1.0",
+    "description": "Checks if a company is sponsoring H1B visas based on job listings.",
+    "permissions": [
+      "activeTab",
+      "storage",
+      "tabs"
+    ],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "content_scripts": [
+      {
+        "matches": [
+          "https://www.linkedin.com/jobs/*"
+        ],
+        "js": ["content.js"]
+      }
+    ],
+    "action": {
+      "default_popup": "popup.html"
+    },
+    "host_permissions": [
+      "https://www.linkedin.com/*"
+    ]
+  }
+  
