@@ -12,7 +12,6 @@ The extension uses a **JavaScript-based content script** to extract job listings
 - **Job Listing Filtering**: Hides job postings from companies that have not recently applied for an H1B visa.
 - **Seamless Experience**: The extension works in the background without disrupting the browsing experience.
 - **Auto-Detection of Listings**: Continuously scans for new job postings as you scroll.
-- **Scroll-Based Extraction**: Ensures that all job listings are checked, even those that require scrolling to load.
 
 ---
 
