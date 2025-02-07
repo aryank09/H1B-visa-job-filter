@@ -1,0 +1,19 @@
+{
+    "manifest_version": 3,
+    "name": "H1B Visa Job Filter",
+    "version": "1.0",
+    "description": "Hides job listings from companies that haven't applied for H1B visas recently.",
+    "permissions": ["storage", "scripting", "activeTab"],
+    "host_permissions": ["your server url"],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "content_scripts": [
+      {
+        "matches": ["*://www.linkedin.com/jobs/*"],
+        "js": ["content.js"],
+        "run_at": "document_idle"
+      }
+    ]
+  }
+  
