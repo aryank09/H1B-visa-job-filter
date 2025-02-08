@@ -17,6 +17,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // Handle changes for database filter
     toggleDatabaseFilter.addEventListener("change", function () {
         chrome.storage.sync.set({ hideUnknown: toggleDatabaseFilter.checked });
-        chrome.runtime.sendMessage({ action: "toggleDatabaseFilter", hide: toggleDatabaseFilter.checked });
+        chrome.runtime.sendMessage({ action: "toggleDatabaseFilter", hideUnknownCompanies: toggleDatabaseFilter.checked });
     });
 });

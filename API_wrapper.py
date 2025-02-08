@@ -15,18 +15,19 @@ CORS(app)
 
 @app.route('/scrape', methods=['POST'])
 def scrape():
-    #getting company names
+    # getting company names and user preference
     data = request.json
     company_names = data.get("companies", [])
-
+    hide_unknown = data.get("hideUnknownCompanies", False)  # Default to False if not provided
+    #print(hide_unknown)
     if not company_names:
         return jsonify({"error": "No company names provided"}), 400
 
-    #Checking H1B sponsorship for each company
-    results = {company: h1b.validity_checker(company) for company in company_names}
+    # Checking H1B sponsorship for each company with the hide_unknown parameter
+    results = {company: h1b.validity_checker(company, hide_unknown) for company in company_names}
 
     return jsonify(results)
 
-#running local server
+# running local server
 if __name__ == "__main__":
     app.run(port=5000)

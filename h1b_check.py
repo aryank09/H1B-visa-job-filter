@@ -31,11 +31,11 @@ checked_companies = {}
 #
 #PRE-CONDITIONS: The method should recieve company name
 #
-#POST-CONSITIONS: The returns True or false, (if comapny does not exist within the database it still returns true)
+#POST-CONSITIONS: The returns True or false, (if company does not exist within the database it still returns true)
 #
 #@params company_name is a str
 #@return boolean, may be True or False
-def validity_checker(company_name):
+def validity_checker(company_name, hideUnkownCompany):
 
     company_name = company_name.lower()
 
@@ -69,7 +69,7 @@ def validity_checker(company_name):
         submit_date = cells[4].get_text(strip=True) #using 4 index since submit date is in the index 4 position
     else:
         print("No data rows found.")
-        return True
+        return hideUnkownCompany
 
     #getting date in the required format
     today = datetime.today()
