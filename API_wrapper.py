@@ -13,18 +13,31 @@ import h1b_check as h1b
 app = Flask(__name__)
 CORS(app)
 
+company_cache = {} #hashmap to store company name and boolean value to make the program faster
+
 @app.route('/scrape', methods=['POST'])
 def scrape():
     # getting company names and user preference
     data = request.json
     company_names = data.get("companies", [])
     hide_unknown = data.get("hideUnknownCompanies", False)  # Default to False if not provided
-    #print(hide_unknown)
+
     if not company_names:
         return jsonify({"error": "No company names provided"}), 400
 
-    # Checking H1B sponsorship for each company with the hide_unknown parameter
-    results = {company: h1b.validity_checker(company, hide_unknown) for company in company_names}
+    results = {}
+    
+    for company in company_names:
+        # Check if the company is already in the cache
+        if company in company_cache:
+            print(f"🔍 Using cached result for {company}")
+            results[company] = company_cache[company]
+        else:
+            # If not in the cache, call the API and store the result
+            print(f"🔄 Calling API for {company}")
+            result = h1b.validity_checker(company, hide_unknown)
+            company_cache[company] = result  # Cache the result
+            results[company] = result
 
     return jsonify(results)
 

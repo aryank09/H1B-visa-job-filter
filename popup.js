@@ -20,3 +20,5 @@ document.addEventListener("DOMContentLoaded", function () {
         chrome.runtime.sendMessage({ action: "toggleDatabaseFilter", hideUnknownCompanies: toggleDatabaseFilter.checked });
     });
 });
+
+//TODO: need to add a pop on the screen visible to user all the time and add progress bar for the user to wait

@@ -22,8 +22,6 @@ amazon_entities = [
         "Amazon.com Services Inc"
     ]
 
-#hashmap containing company names and boolean value for faster removal
-checked_companies = {}
 
 #validity_check method
 #
@@ -41,9 +39,6 @@ def validity_checker(company_name, hideUnkownCompany):
 
     if company_name in amazon_entities:
          company_name = "amazon"
-    
-    if company_name in checked_companies:
-         return checked_companies.get(company_name)
 
     print(company_name)
     if (company_name == "meta"):
@@ -84,10 +79,8 @@ def validity_checker(company_name, hideUnkownCompany):
     if difference < 365:
         #if applied less than 1 year
         print(difference)
-        checked_companies[company_name] = True
         return True
     else:
         print(difference)
-        checked_companies[company_name] = False
         return False
 
