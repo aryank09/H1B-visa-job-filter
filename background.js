@@ -1,6 +1,7 @@
-const apiUrl = "your server address"; // Flask API URL
-
+const apiUrl = "you server address"; // Flask API URL
+//TODO: remove your server address
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    //TODO: if condition to toggle filters
     if (message.action === "fetchH1BData") {
         const company = message.company;
 
