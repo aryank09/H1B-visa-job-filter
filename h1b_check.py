@@ -12,8 +12,6 @@ from datetime import datetime
 
 #url in the form of https://h1bdata.info/index.php?em=(company_name_goes_here)&job=&city=&year=2024
 
-#TODO: Need to figure out a way to keep hashmap in use for the entire session, instead of starting again
-
 #to ensure gone under one name because issue with link 
 amazon_entities = [
         "Amazon.com Services LLC",
@@ -50,7 +48,16 @@ def validity_checker(company_name, hideUnkownCompany):
         url = f"{base_url}{company_name.replace(' ', '+')}&year=2024"
 
     
-    response = requests.get(url)
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  
+        print("Request succeeded.")
+    except requests.exceptions.TooManyRedirects as e:
+        print("Error: Exceeded maximum allowed redirects:", e)
+        return hideUnkownCompany
+    except requests.exceptions.RequestException as e:
+        print("An error occurred:", e)
+        return hideUnkownCompany
     if response.status_code != 200:
             print(response.status_code)
             print("Failed to retrieve the webpage.")

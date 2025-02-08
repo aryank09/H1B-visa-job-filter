@@ -1,4 +1,4 @@
-const apiUrl = "http://127.0.0.1:5000/scrape"; // Flask API URL
+const apiUrl = "your server address"; // Flask API URL
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "fetchH1BData") {
@@ -34,3 +34,5 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return true; // Keep the message channel open until the response is received
     }
 });
+
+//TODO: The program saves the setting for a certain page not for all; need to allow toggle button setting changes for all and does not require refreshing the web page
