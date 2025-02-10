@@ -3,199 +3,126 @@
 
     console.log("🔹 H1B Visa Checker Content Script Loaded");
 
-    let filterEnabled = true;
+    let extensionEnabled = true;
     let hideUnknown = false;
 
-    // Load saved toggle states from storage
-    chrome.storage.sync.get(["filterEnabled", "hideUnknown"], function (data) {
-        filterEnabled = data.filterEnabled ?? true;
+    // Load saved toggle states from storage and start filtering if enabled
+    chrome.storage.sync.get(["extensionEnabled", "hideUnknown"], (data) => {
+        extensionEnabled = data.extensionEnabled ?? true;
         hideUnknown = data.hideUnknown ?? false;
-
-        if (filterEnabled) {
-            // Begin by auto-scrolling the container until all content is loaded
+        console.log(`Loaded settings: extensionEnabled = ${extensionEnabled}, hideUnknown = ${hideUnknown}`);
+        if (extensionEnabled) {
             autoScrollContainer();
         }
     });
 
-    /**
-     * autoScrollContainer
-     *
-     * Repeatedly scrolls the container (".scaffold-layout__list") until its
-     * scrollHeight stops increasing, then calls debugJobListings.
-     */
+    // Automatically scroll the container to load all job listings
     function autoScrollContainer() {
         const container = document.querySelector(".scaffold-layout__list");
         if (!container) {
             console.warn("⚠️ Job listings container not found.");
             return;
         }
-        
         let lastScrollHeight = container.scrollHeight;
-        console.log("Initial container scroll height: " + lastScrollHeight);
-    
         const scrollInterval = setInterval(() => {
             container.scrollTop = container.scrollHeight;
-            console.log("Scrolling container; current scrollTop: " + container.scrollTop);
-    
-            // Wait a bit for lazy-loaded content to update
             setTimeout(() => {
                 const currentScrollHeight = container.scrollHeight;
-                console.log("Current container scroll height: " + currentScrollHeight);
-                console.log("Number of job cards: " + document.querySelectorAll("li[id]").length);
-    
                 if (currentScrollHeight > lastScrollHeight) {
-                    console.log("New content loaded: previous height = " + lastScrollHeight + ", current height = " + currentScrollHeight);
                     lastScrollHeight = currentScrollHeight;
                 } else {
-                    console.log("✅ No new content detected. Stopping scroll.");
                     clearInterval(scrollInterval);
-                    // Extra wait before processing, just in case
-                    setTimeout(() => {
-                        debugJobListings();
-                    }, 3000); // Increased delay to 3 seconds
+                    setTimeout(debugJobListings, 3000);
                 }
-            }, 3000); // Increase delay here as well
-        }, 3000);  // Increase the interval to 3 seconds between scrolls
+            }, 3000);
+        }, 3000);
     }
-    
 
-    /**
-     * debugJobListings
-     *
-     * Extracts company names from all job cards on the page and sends them to the background script for API checking.
-     */
+    // Extract job listings and send them for H1B validation
     function debugJobListings() {
-        if (!filterEnabled) {
-            console.log("❌ Filtering is disabled.");
+        if (!extensionEnabled) {
+            console.log("Extension filtering disabled.");
             return;
         }
-
         console.log("🔍 Extracting job listings...");
-
-        // Select all job cards (li elements with an id) in the document.
         const jobCards = document.querySelectorAll("li[id]");
         if (jobCards.length === 0) {
-            console.warn("⚠️ No job listings found. Retrying...");
-            setTimeout(debugJobListings, 2000); // Retry after 2 seconds
+            console.warn("No job listings found. Retrying...");
+            setTimeout(debugJobListings, 2000);
             return;
         }
-
-        console.log(`✅ Found ${jobCards.length} job cards.`);
         let jobData = [];
-
-        jobCards.forEach((job, index) => {
+        jobCards.forEach(job => {
             const companyElement = job.querySelector("div.artdeco-entity-lockup__subtitle span");
             const jobTitleElement = job.querySelector("div.artdeco-entity-lockup__title a");
-
             if (companyElement && jobTitleElement) {
-                const companyName = companyElement.textContent.trim();
-                const jobTitle = jobTitleElement.textContent.trim();
-
-                console.log(`📝 Job ${index + 1}: ${jobTitle} at ${companyName}`);
                 jobData.push({
-                    company: companyName,
-                    jobTitle: jobTitle,
-                    jobElement: job // Store reference to the <li> element
+                    company: companyElement.textContent.trim(),
+                    jobTitle: jobTitleElement.textContent.trim(),
+                    jobElement: job
                 });
             }
         });
-
-        if (jobData.length === 0) {
-            console.warn("⚠️ No company names extracted.");
-            return;
+        if (jobData.length > 0) {
+            sendJobListingToBackground(jobData);
         }
-
-        // Send the extracted job listings to background.js for API checking
-        sendJobListingToBackground(jobData);
     }
 
-    /**
-     * sendJobListingToBackground
-     *
-     * Sends company names (from jobData) to the background script for H1B status checking.
-     */
+    // Process job listings in batch using one retrieval of the hideUnknown setting
     function sendJobListingToBackground(jobData) {
-        if (jobData.length === 0) {
-            console.warn("⚠️ No jobs to process.");
-            return;
-        }
-
-        console.log("📤 Sending job listings to background script...");
-
-        function processNextJob(index) {
-            if (index >= jobData.length) {
-                console.log("✅ All jobs processed.");
-                // After processing, re-run debugJobListings to capture any newly loaded job postings.
-                return debugJobListings();
-            }
-
-            const job = jobData[index];
-
-            if (!job.jobElement) {
-                console.warn(`⚠️ Job element missing for ${job.company}, skipping...`);
-                processNextJob(index + 1);
-                return;
-            }
-
-            console.log(`🔍 Checking job (${index + 1}/${jobData.length}): ${job.jobTitle} at ${job.company}`);
-
-            // Retrieve the "hide unknown companies" setting from storage
-            chrome.storage.sync.get(["hideUnknown"], function (data) {
-                const hideUnknown = data.hideUnknown ?? false; // Default to false if not set
-
-                chrome.runtime.sendMessage(
-                    { 
-                        action: "fetchH1BData", 
-                        company: job.company,
-                        hideUnknown: hideUnknown // Send toggle value to API
-                    },
-                    (response) => {
-                        if (chrome.runtime.lastError) {
-                            console.error(`❌ Error sending request for ${job.company}:`, chrome.runtime.lastError);
-                            return;
-                        }
-
-                        if (response && response.success && response.data[job.company] !== undefined) {
-                            if (response.data[job.company] === false) {
-                                console.log(`🙈 Hiding job from: ${job.company}`);
-                                job.jobElement.style.display = "none";
-                            } else {
-                                console.log(`👀 Not hiding job from: ${job.company}`);
-                            }
+        chrome.storage.sync.get("hideUnknown", (data) => {
+            const hideUnknownSetting = data.hideUnknown ?? false;
+            let index = 0;
+            function processNextJob() {
+                if (index >= jobData.length) {
+                    return debugJobListings();
+                }
+                const job = jobData[index];
+                chrome.runtime.sendMessage({
+                    action: "fetchH1BData",
+                    company: job.company,
+                    hideUnknown: hideUnknownSetting
+                }, (response) => {
+                    if (response && response.success && response.data[job.company] !== undefined) {
+                        if (!response.data[job.company]) {
+                            job.jobElement.style.display = "none";
                         } else {
-                            console.warn(`⚠️ Unexpected API response for ${job.company}. Skipping...`);
+                            job.jobElement.style.display = "";
                         }
-
-                        console.log(`🚀 Moving to the next job after ${job.company}`);
-                        setTimeout(() => processNextJob(index + 1), 500);
                     }
-                );
-            });
-        }
-
-        console.log("🚀 Starting job processing...");
-        processNextJob(0);
+                    index++;
+                    // Reduced delay to 100ms for faster processing
+                    setTimeout(processNextJob, 100);
+                });
+            }
+            processNextJob();
+        });
     }
 
-    // Listen for toggle changes from popup.js
-    chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-        if (request.action === "toggleFiltering") {
-            filterEnabled = request.enabled;
-            console.log(`🛑 Filtering toggled: ${filterEnabled ? "ON" : "OFF"}`);
-            if (filterEnabled) {
-                debugJobListings();
-            } else {
-                location.reload(); // When turned off, reload the page to show all jobs
+    // Listen for settings updates from popup (or background)
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        if (request.action === "updateSettings") {
+            if (request.extensionEnabled !== undefined) {
+                extensionEnabled = request.extensionEnabled;
+                chrome.storage.sync.set({ extensionEnabled });
+                console.log("ExtensionEnabled updated to:", extensionEnabled);
+                if (extensionEnabled) {
+                    // Immediately start filtering without a page refresh
+                    autoScrollContainer();
+                } else {
+                    // Show all jobs if filtering is disabled
+                    document.querySelectorAll("li[id]").forEach(job => job.style.display = "");
+                }
             }
+            if (request.hideUnknown !== undefined) {
+                hideUnknown = request.hideUnknown;
+                chrome.storage.sync.set({ hideUnknown });
+                console.log("hideUnknown updated to:", hideUnknown);
+                if (extensionEnabled) {
+                    debugJobListings();
+                }
+            }
+            sendResponse({ success: true });
         }
-
-        if (request.action === "toggleDatabaseFilter") {
-            hideUnknown = request.hide;
-            console.log(`🛑 Hide unknown companies: ${hideUnknown}`);
-            debugJobListings();
-        }
-
-        sendResponse({ success: true });
     });
-
 })();
