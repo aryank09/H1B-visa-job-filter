@@ -1,4 +1,4 @@
-# H1B Visa Checker Chrome Extension
+# H1B Visa Checker Chrome Extension (WORK IN PROGRESS)
 
 ## Overview
 The **H1B Visa Checker** Chrome extension helps job seekers filter job listings on LinkedIn based on a company's H1B visa application history. It checks whether a company has applied for an H1B visa in the past year and hides job postings from companies that have not. Companies missing from the H1B database are filtered, a toogle option is present to not filter them.
