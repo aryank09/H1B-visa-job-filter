@@ -5,121 +5,273 @@
 
     let filterEnabled = true;
     let hideUnknown = false;
+    let processedJobs = new Set();
+    let isInitialized = false;
 
-    // Load saved settings and apply filtering immediately
-    chrome.storage.sync.get(["filterEnabled", "hideUnknown"], function (data) {
-        filterEnabled = data.filterEnabled ?? true;
-        hideUnknown = data.hideUnknown ?? false;
+    // Create status overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        z-index: 9999;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        display: none;
+    `;
+    document.body.appendChild(overlay);
 
+    // Function to start processing
+    function startProcessing() {
+        console.log("🔄 Starting job processing with settings:", { filterEnabled, hideUnknown });
         if (filterEnabled) {
-            autoScrollContainer();
+            processJobListings();
+        }
+    }
+
+    // Initialize settings from storage and start processing
+    function initialize() {
+        chrome.storage.sync.get(["filterEnabled", "hideUnknown"], (data) => {
+            console.log("📥 Loaded storage settings:", data);
+            filterEnabled = data.filterEnabled !== undefined ? data.filterEnabled : true;
+            hideUnknown = data.hideUnknown !== undefined ? data.hideUnknown : false;
+            isInitialized = true;
+            startProcessing();
+        });
+    }
+
+    // Listen for messages from background script
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        console.log("📨 Received message:", message);
+        
+        if (message.action === "initializeState") {
+            console.log("🔧 Initializing state with:", message);
+            filterEnabled = message.filterEnabled;
+            hideUnknown = message.hideUnknown;
+            isInitialized = true;
+            startProcessing();
+            sendResponse({ success: true });
+            return true;
+        }
+
+        if (message.action === "updateFilterState") {
+            console.log("🔄 Updating filter state:", message.enabled);
+            filterEnabled = message.enabled;
+            if (filterEnabled) {
+                processJobListings();
+            } else {
+                resetJobCards();
+            }
+            sendResponse({ success: true });
+            return true;
+        }
+
+        if (message.action === "updateDatabaseFilter") {
+            console.log("🔄 Updating database filter:", message.hide);
+            hideUnknown = message.hide;
+            if (filterEnabled) {
+                processJobListings();
+            }
+            sendResponse({ success: true });
+            return true;
         }
     });
 
-    function autoScrollContainer() {
-        const container = document.querySelector(".scaffold-layout__list");
-        if (!container) {
-            console.warn("⚠️ Job listings container not found.");
-            return;
-        }
-
-        let lastScrollHeight = container.scrollHeight;
-        const scrollInterval = setInterval(() => {
-            container.scrollTop = container.scrollHeight;
-
-            setTimeout(() => {
-                const currentScrollHeight = container.scrollHeight;
-                if (currentScrollHeight > lastScrollHeight) {
-                    lastScrollHeight = currentScrollHeight;
-                } else {
-                    clearInterval(scrollInterval);
-                    setTimeout(debugJobListings, 3000);
-                }
-            }, 3000);
-        }, 3000);
-    }
-
-    function debugJobListings() {
-        if (!filterEnabled) return;
-
-        console.log("🔍 Extracting job listings...");
-        const jobCards = document.querySelectorAll("li[id]");
-
-        if (jobCards.length === 0) {
-            setTimeout(debugJobListings, 2000);
-            return;
-        }
-
-        let jobData = [];
-        jobCards.forEach((job, index) => {
-            const companyElement = job.querySelector("div.artdeco-entity-lockup__subtitle span");
-            const jobTitleElement = job.querySelector("div.artdeco-entity-lockup__title a");
-
-            if (companyElement && jobTitleElement) {
-                jobData.push({
-                    company: companyElement.textContent.trim(),
-                    jobTitle: jobTitleElement.textContent.trim(),
-                    jobElement: job
-                });
+    // Reset all job cards to their original state
+    function resetJobCards() {
+        const jobCards = document.querySelectorAll('.job-card-container, .jobs-search-results__list-item');
+        jobCards.forEach(card => {
+            card.style.opacity = '1';
+            card.style.display = '';
+            const status = card.querySelector('.h1b-status');
+            if (status) {
+                status.remove();
             }
         });
-
-        if (jobData.length > 0) {
-            sendJobListingToBackground(jobData);
-        }
+        processedJobs.clear();
+        overlay.style.display = 'none';
     }
 
-    function sendJobListingToBackground(jobData) {
-        function processNextJob(index) {
-            if (index >= jobData.length) return;
-
-            const job = jobData[index];
-            if (!job.jobElement) {
-                processNextJob(index + 1);
-                return;
-            }
-
-            chrome.runtime.sendMessage(
-                { action: "fetchH1BData", company: job.company, hideUnknown },
-                (response) => {
-                    if (chrome.runtime.lastError) {
-                        console.error(`❌ Error fetching data for ${job.company}:`, chrome.runtime.lastError);
-                        return;
-                    }
-
-                    if (response && response.success && response.data[job.company] !== undefined) {
-                        if (response.data[job.company] === false) {
-                            job.jobElement.style.display = "none";
-                        }
-                    }
-                    setTimeout(() => processNextJob(index + 1), 500);
-                }
+    // Observer for dynamic content
+    const observer = new MutationObserver((mutations) => {
+        if (filterEnabled && isInitialized) {
+            const hasNewJobs = mutations.some(mutation => 
+                Array.from(mutation.addedNodes).some(node => 
+                    node.nodeType === 1 && 
+                    (node.classList?.contains('job-card-container') || 
+                     node.classList?.contains('jobs-search-results__list-item'))
+                )
             );
+            
+            if (hasNewJobs) {
+                processJobListings();
+            }
+        }
+    });
+
+    async function processJobListings() {
+        console.log("🔍 Starting to process job listings");
+        
+        // Use the li[id^="ember"] selector to get job cards
+        const jobCards = document.querySelectorAll('li[id^="ember"]');
+        
+        if (jobCards.length === 0) {
+            console.log("⚠️ No job cards found");
+            return;
         }
 
-        processNextJob(0);
-    }
+        console.log(`📋 Found ${jobCards.length} job cards`);
+        overlay.style.display = 'block';
+        overlay.textContent = 'Processing job listings...';
+        
+        for (const card of jobCards) {
+            if (processedJobs.has(card)) continue;
+            
+            try {
+                // Log the card ID for debugging
+                console.log("Processing card:", card.id);
 
-    // Listen for global toggle updates from background.js
-    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-        if (request.action === "updateFilterState") {
-            filterEnabled = request.enabled;
-            console.log(`🔄 Filtering toggled: ${filterEnabled ? "ON" : "OFF"}`);
+                // Get all spans in the card and log them for debugging
+                const spans = card.querySelectorAll('span');
+                console.log(`Found ${spans.length} spans in card`);
+                
+                let companyName = '';
+                
+                // Look through spans for company name
+                for (const span of spans) {
+                    const text = span.textContent.trim();
+                    console.log(`Checking span with class "${span.className}":`, text);
+                    
+                    // Skip if empty or looks like metadata
+                    if (!text || 
+                        text.includes('ago') || 
+                        text.includes('•') || 
+                        text.includes('followers') ||
+                        text.includes('Promoted') ||
+                        text.toLowerCase().includes('intern') ||
+                        text.toLowerCase().includes('engineer') ||
+                        text.toLowerCase().includes('developer') ||
+                        text.includes('(') ||
+                        text.length > 50) {
+                        continue;
+                    }
+                    
+                    companyName = text;
+                    console.log(`Found potential company name: "${companyName}" in span with class:`, span.className);
+                    break;
+                }
 
-            if (filterEnabled) {
-                debugJobListings();
-            } else {
-                document.querySelectorAll("li[id]").forEach(job => job.style.display = ""); // Show all jobs
+                if (!companyName) {
+                    console.log("⚠️ No valid company name found in card:", card.id);
+                    continue;
+                }
+
+                console.log(`�� Using company name: "${companyName}" from card:`, card.id);
+                
+                processedJobs.add(card);
+                overlay.textContent = `Checking ${companyName}...`;
+                
+                const response = await new Promise(resolve => {
+                    chrome.runtime.sendMessage(
+                        { action: "fetchH1BData", company: companyName },
+                        resolve
+                    );
+                });
+
+                if (!response.success) {
+                    console.error(`❌ Error checking ${companyName}:`, response.error);
+                    continue;
+                }
+
+                console.log(`✅ Result for ${companyName}:`, response.isH1B);
+                updateJobCard(card, companyName, response.isH1B);
+
+            } catch (error) {
+                console.error('❌ Error processing job card:', error);
+                console.error('Stack:', error.stack);
             }
         }
 
-        if (request.action === "updateDatabaseFilter") {
-            hideUnknown = request.hide;
-            console.log(`🔄 Hide unknown companies updated: ${hideUnknown}`);
-            debugJobListings();
+        overlay.style.display = 'none';
+        console.log("✅ Finished processing job listings");
+    }
+
+    function updateJobCard(card, companyName, isH1B) {
+        // Remove any existing status indicators
+        const existingStatus = card.querySelector('.h1b-status');
+        if (existingStatus) {
+            existingStatus.remove();
         }
 
-        sendResponse({ success: true });
+        // Create status indicator
+        const status = document.createElement('div');
+        status.className = 'h1b-status';
+        status.style.cssText = `
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin: 8px 0;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+        `;
+
+        if (isH1B) {
+            status.textContent = '✅ H1B Sponsor';
+            status.style.backgroundColor = '#e6f4ea';
+            status.style.color = '#137333';
+            card.style.opacity = '1';
+        } else {
+            status.textContent = '❌ No Recent H1B';
+            status.style.backgroundColor = '#fce8e6';
+            status.style.color = '#c5221f';
+            if (hideUnknown) {
+                card.style.display = 'none';
+            } else {
+                card.style.opacity = '0.5';
+            }
+        }
+
+        // Try different locations to insert the status
+        const insertLocations = [
+            '.job-card-container__company-name',
+            '.job-card-container__primary-description',
+            '.company-name',
+            '.job-card-container__company-link',
+            '.artdeco-entity-lockup__subtitle'
+        ];
+
+        let inserted = false;
+        for (const selector of insertLocations) {
+            const element = card.querySelector(selector);
+            if (element) {
+                element.parentNode.insertBefore(status, element.nextSibling);
+                inserted = true;
+                break;
+            }
+        }
+
+        if (!inserted) {
+            console.log(`⚠️ Could not find insertion point for status in card for ${companyName}`);
+            // Fallback: insert at the beginning of the card
+            card.insertBefore(status, card.firstChild);
+        }
+    }
+
+    // Initialize on load
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initialize);
+    } else {
+        initialize();
+    }
+
+    // Start observing
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
     });
 
 })();

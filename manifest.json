@@ -1,29 +1,39 @@
 {
-    "manifest_version": 3,
-    "name": "H1B Visa Checker",
-    "version": "1.0",
-    "description": "Checks if a company is sponsoring H1B visas based on job listings.",
-    "permissions": [
+  "manifest_version": 3,
+  "name": "H1B Visa Checker",
+  "version": "1.0",
+  "description": "Checks if a company is sponsoring H1B visas based on job listings.",
+  "permissions": [
       "activeTab",
       "storage",
+      "scripting",
+      "declarativeNetRequest",
       "tabs"
-    ],
-    "background": {
-      "service_worker": "background.js"
-    },
-    "content_scripts": [
+  ],
+  "host_permissions": [
+      "https://www.linkedin.com/*",
+      "https://h1bdata.info/*"
+  ],
+  "background": {
+      "service_worker": "background.js",
+      "type": "module"
+  },
+  "content_scripts": [
       {
-        "matches": [
-          "https://www.linkedin.com/jobs/*"
-        ],
-        "js": ["content.js"]
+          "matches": ["https://www.linkedin.com/jobs/*"],
+          "js": ["content.js"]
       }
-    ],
-    "action": {
+  ],
+  "action": {
       "default_popup": "popup.html"
-    },
-    "host_permissions": [
-      "https://www.linkedin.com/*"
-    ]
+  },
+  "declarative_net_request": {
+      "rule_resources": [
+          {
+              "id": "cors_rules",
+              "enabled": true,
+              "path": "rules.json"
+          }
+      ]
   }
-  
+}
