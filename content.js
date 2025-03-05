@@ -14,16 +14,23 @@
         position: fixed;
         top: 10px;
         right: 10px;
-        background-color: rgba(255, 255, 255, 0.9);
-        padding: 10px;
-        border-radius: 5px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         z-index: 9999;
         font-family: Arial, sans-serif;
         font-size: 14px;
         display: none;
+        border: 1px solid #e0e0e0;
+        color: #333;
+        min-width: 200px;
+        text-align: center;
     `;
     document.body.appendChild(overlay);
+
+    // Function to sleep/delay
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     // Function to start processing
     function startProcessing() {
@@ -126,12 +133,16 @@
 
         console.log(`📋 Found ${jobCards.length} job cards`);
         overlay.style.display = 'block';
-        overlay.textContent = 'Processing job listings...';
+        overlay.textContent = 'Starting to process job listings...';
+        
+        let processedCount = 0;
+        const totalCards = jobCards.length;
         
         for (const card of jobCards) {
             if (processedJobs.has(card)) continue;
             
             try {
+                processedCount++;
                 // Log the card ID for debugging
                 console.log("Processing card:", card.id);
 
@@ -170,10 +181,10 @@
                     continue;
                 }
 
-                console.log(`�� Using company name: "${companyName}" from card:`, card.id);
+                console.log(`🏢 Using company name: "${companyName}" from card:`, card.id);
                 
                 processedJobs.add(card);
-                overlay.textContent = `Checking ${companyName}...`;
+                overlay.innerHTML = `Processing: ${companyName}<br><small>Progress: ${processedCount}/${totalCards} jobs</small>`;
                 
                 const response = await new Promise(resolve => {
                     chrome.runtime.sendMessage(
@@ -190,12 +201,18 @@
                 console.log(`✅ Result for ${companyName}:`, response.isH1B);
                 updateJobCard(card, companyName, response.isH1B);
 
+                // Add a delay between processing each card
+                await sleep(300); // 300ms delay
+
             } catch (error) {
                 console.error('❌ Error processing job card:', error);
                 console.error('Stack:', error.stack);
             }
         }
 
+        // Keep the final status visible for a moment before hiding
+        overlay.textContent = `✅ Completed processing ${processedCount} jobs`;
+        await sleep(2000);
         overlay.style.display = 'none';
         console.log("✅ Finished processing job listings");
     }
