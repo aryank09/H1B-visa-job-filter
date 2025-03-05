@@ -27,6 +27,20 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(clients.claim());
 });
 
+// Setup periodic cache cleanup
+function setupPeriodicCacheCleanup() {
+    console.log('Setting up periodic cache cleanup');
+    
+    // Initial cleanup
+    cleanCache();
+    
+    // Set up periodic cleanup
+    setInterval(async () => {
+        console.log('Running scheduled cache cleanup');
+        await cleanCache();
+    }, CACHE_CLEANUP_INTERVAL);
+}
+
 // Handle tab updates to ensure content script is ready
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete' && tab.url?.includes('linkedin.com/jobs')) {
