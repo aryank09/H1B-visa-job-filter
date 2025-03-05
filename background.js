@@ -30,12 +30,11 @@ self.addEventListener('activate', (event) => {
 // Handle tab updates to ensure content script is ready
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete' && tab.url?.includes('linkedin.com/jobs')) {
-        chrome.storage.sync.get(['filterEnabled', 'hideUnknown'], async (data) => {
+        chrome.storage.sync.get(['filterEnabled'], async (data) => {
             try {
                 await chrome.tabs.sendMessage(tabId, {
                     action: "initializeState",
-                    filterEnabled: data.filterEnabled !== undefined ? data.filterEnabled : true,
-                    hideUnknown: data.hideUnknown !== undefined ? data.hideUnknown : false
+                    filterEnabled: data.filterEnabled !== undefined ? data.filterEnabled : true
                 });
             } catch (e) {
                 console.log(`Tab ${tabId} not yet ready for initialization`);
@@ -47,12 +46,9 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 chrome.runtime.onInstalled.addListener(async () => {
     try {
         // Initialize storage with defaults
-        const data = await chrome.storage.sync.get(["filterEnabled", "hideUnknown"]);
+        const data = await chrome.storage.sync.get(["filterEnabled"]);
         if (data.filterEnabled === undefined) {
             await chrome.storage.sync.set({ filterEnabled: true });
-        }
-        if (data.hideUnknown === undefined) {
-            await chrome.storage.sync.set({ hideUnknown: false });
         }
 
         // Initialize and clean cache
@@ -75,8 +71,7 @@ chrome.runtime.onInstalled.addListener(async () => {
             try {
                 await chrome.tabs.sendMessage(tab.id, {
                     action: "initializeState",
-                    filterEnabled: data.filterEnabled !== undefined ? data.filterEnabled : true,
-                    hideUnknown: data.hideUnknown !== undefined ? data.hideUnknown : false
+                    filterEnabled: data.filterEnabled !== undefined ? data.filterEnabled : true
                 });
             } catch (e) {
                 console.log(`Existing tab ${tab.id} not ready for initialization`);
@@ -100,11 +95,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         handleToggleFiltering(message.enabled, sendResponse);
         return true;
     }
-
-    if (message.action === "toggleDatabaseFilter") {
-        handleToggleDatabaseFilter(message.hide, sendResponse);
-        return true;
-    }
 });
 
 async function handleH1BDataFetch(company, sendResponse) {
@@ -112,13 +102,11 @@ async function handleH1BDataFetch(company, sendResponse) {
         console.log('🚀 handleH1BDataFetch STARTED for company:', company);
         
         const cache = await chrome.storage.local.get("companyStatusCache");
-        const { hideUnknown } = await chrome.storage.sync.get("hideUnknown");
         
         console.log('📦 Cache status:', {
             hasCacheData: !!cache.companyStatusCache,
             companyInCache: !!cache.companyStatusCache?.items[company],
-            cacheVersion: cache.companyStatusCache?.version,
-            hideUnknown: hideUnknown
+            cacheVersion: cache.companyStatusCache?.version
         });
         
         // Check cache version and validity
@@ -137,7 +125,7 @@ async function handleH1BDataFetch(company, sendResponse) {
 
         // If not in cache or expired, fetch new data
         console.log(`🌐 [SCRAPER] Starting validity check for ${company}`);
-        const isH1B = await validityChecker(company, hideUnknown);
+        const isH1B = await validityChecker(company);
         console.log(`📊 Validity check result for ${company}:`, isH1B);
         
         // Update cache
@@ -161,7 +149,7 @@ async function handleToggleFiltering(enabled, sendResponse) {
             try {
                 await chrome.tabs.sendMessage(tab.id, { 
                     action: "updateFilterState", 
-                    enabled: enabled 
+                    enabled: enabled
                 });
             } catch (e) {
                 console.log(`Tab ${tab.id} not ready for message`);
@@ -174,28 +162,7 @@ async function handleToggleFiltering(enabled, sendResponse) {
     }
 }
 
-async function handleToggleDatabaseFilter(hide, sendResponse) {
-    try {
-        await chrome.storage.sync.set({ hideUnknown: hide });
-        const tabs = await chrome.tabs.query({});
-        for (const tab of tabs) {
-            try {
-                await chrome.tabs.sendMessage(tab.id, { 
-                    action: "updateDatabaseFilter", 
-                    hide: hide 
-                });
-            } catch (e) {
-                console.log(`Tab ${tab.id} not ready for message`);
-            }
-        }
-        sendResponse({ success: true });
-    } catch (error) {
-        console.error("Error toggling database filter:", error);
-        sendResponse({ success: false, error: error.message });
-    }
-}
-
-async function validityChecker(companyName, hideUnknownCompany) {
+async function validityChecker(companyName) {
     try {
         console.log('🔍 Starting validity check for company:', companyName);
         
@@ -289,7 +256,7 @@ async function validityChecker(companyName, hideUnknownCompany) {
         const differenceInDays = Math.abs(Math.floor((today - submitDate) / (1000 * 60 * 60 * 24)));
         console.log(`⏱️ Absolute date difference: ${differenceInDays} days`);
 
-        // Consider it recent if the date is within 365 days (past or future)
+        // Consider it recent if the date is within 365 days
         const isRecent = differenceInDays < 365;
         console.log(`✨ Final H1B status for ${companyName}: ${isRecent ? 'RECENT ✅' : 'NOT RECENT ❌'}`);
         
