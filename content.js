@@ -33,10 +33,10 @@
     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     // Function to start processing
-    function startProcessing() {
+    async function startProcessing() {
         console.log("🔄 Starting job processing with settings:", { filterEnabled });
         if (filterEnabled) {
-            processJobListings();
+            await processJobListings();
         }
     }
 
@@ -181,7 +181,7 @@
             console.log("🔄 Updating filter state:", message.enabled);
             filterEnabled = message.enabled;
             if (filterEnabled) {
-                processJobListings();
+                startProcessing();
             } else {
                 resetJobCards();
             }
@@ -200,10 +200,11 @@
         }
     });
 
+    // Update processJobListings to handle visible jobs only
     async function processJobListings() {
-        console.log("🔍 Starting to process job listings");
+        console.log("🔍 Starting to process visible job listings");
         
-        // Use the li[id^="ember"] selector to get job cards
+        // Get visible job cards
         const jobCards = document.querySelectorAll('li[id^="ember"]');
         
         if (jobCards.length === 0) {
@@ -211,49 +212,55 @@
             return;
         }
 
-        console.log(`📋 Found ${jobCards.length} job cards`);
+        console.log(`📋 Found ${jobCards.length} job cards to process`);
         overlay.style.display = 'block';
-        overlay.textContent = 'Starting to process job listings...';
+        overlay.textContent = 'Processing visible jobs...';
         
         let processedCount = 0;
         const totalCards = jobCards.length;
         
         for (const card of jobCards) {
-            if (processedJobs.has(card)) continue;
+            if (processedJobs.has(card.id)) {
+                console.log(`Skipping already processed card: ${card.id}`);
+                continue;
+            }
             
             try {
                 processedCount++;
-                // Log the card ID for debugging
-                console.log("Processing card:", card.id);
+                console.log(`Processing card ${processedCount}/${totalCards}:`, card.id);
 
-                // Get all spans in the card and log them for debugging
-                const spans = card.querySelectorAll('span');
-                console.log(`Found ${spans.length} spans in card`);
-                
+                // Try to find company name using the most reliable selector first
+                const companyNameElement = 
+                    card.querySelector('.job-card-container__company-name') ||
+                    card.querySelector('.job-card-container__primary-description') ||
+                    card.querySelector('.company-name') ||
+                    card.querySelector('.artdeco-entity-lockup__subtitle');
+
                 let companyName = '';
-                
-                // Look through spans for company name
-                for (const span of spans) {
-                    const text = span.textContent.trim();
-                    console.log(`Checking span with class "${span.className}":`, text);
-                    
-                    // Skip if empty or looks like metadata
-                    if (!text || 
-                        text.includes('ago') || 
-                        text.includes('•') || 
-                        text.includes('followers') ||
-                        text.includes('Promoted') ||
-                        text.toLowerCase().includes('intern') ||
-                        text.toLowerCase().includes('engineer') ||
-                        text.toLowerCase().includes('developer') ||
-                        text.includes('(') ||
-                        text.length > 50) {
-                        continue;
+                if (companyNameElement) {
+                    companyName = companyNameElement.textContent.trim();
+                    console.log(`Found company name using direct selector: "${companyName}"`);
+                } else {
+                    // Fallback to span search if direct selectors fail
+                    const spans = card.querySelectorAll('span');
+                    for (const span of spans) {
+                        const text = span.textContent.trim();
+                        if (!text || 
+                            text.includes('ago') || 
+                            text.includes('•') || 
+                            text.includes('followers') ||
+                            text.includes('Promoted') ||
+                            text.toLowerCase().includes('intern') ||
+                            text.toLowerCase().includes('engineer') ||
+                            text.toLowerCase().includes('developer') ||
+                            text.includes('(') ||
+                            text.length > 50) {
+                            continue;
+                        }
+                        companyName = text;
+                        console.log(`Found company name in span: "${companyName}"`);
+                        break;
                     }
-                    
-                    companyName = text;
-                    console.log(`Found potential company name: "${companyName}" in span with class:`, span.className);
-                    break;
                 }
 
                 if (!companyName) {
@@ -261,9 +268,7 @@
                     continue;
                 }
 
-                console.log(`🏢 Using company name: "${companyName}" from card:`, card.id);
-                
-                processedJobs.add(card);
+                processedJobs.add(card.id);
                 overlay.innerHTML = `Processing: ${companyName}<br><small>Progress: ${processedCount}/${totalCards} jobs</small>`;
                 
                 const response = await new Promise(resolve => {
@@ -278,23 +283,17 @@
                     continue;
                 }
 
-                console.log(`✅ Result for ${companyName}:`, response.isH1B);
                 updateJobCard(card, companyName, response.isH1B);
-
-                // Add a delay between processing each card
-                await sleep(300); // 300ms delay
+                await sleep(200);
 
             } catch (error) {
                 console.error('❌ Error processing job card:', error);
-                console.error('Stack:', error.stack);
             }
         }
 
-        // Keep the final status visible for a moment before hiding
         overlay.textContent = `✅ Completed processing ${processedCount} jobs`;
         await sleep(2000);
         overlay.style.display = 'none';
-        console.log("✅ Finished processing job listings");
     }
 
     function updateJobCard(card, companyName, isH1B) {

@@ -1,15 +1,24 @@
 document.addEventListener("DOMContentLoaded", function () {
     const toggleFilter = document.getElementById("toggleFilter");
-    const statusText = document.createElement("div");
-    statusText.id = "status";
-    document.body.appendChild(statusText);
+    const statusText = document.getElementById("status");
+
+    function showStatus(message, duration = 2000) {
+        statusText.textContent = message;
+        statusText.classList.add('visible');
+        setTimeout(() => {
+            statusText.classList.remove('visible');
+        }, duration);
+    }
 
     // Load initial state
     chrome.storage.sync.get("filterEnabled", (data) => {
-        // Set the toggle to match storage, default to false if not set
         const isEnabled = data.filterEnabled ?? false;
         toggleFilter.checked = isEnabled;
         console.log("Initial filter state:", isEnabled);
+        
+        if (isEnabled) {
+            showStatus("Filter is active - Scroll through jobs to process them", 3000);
+        }
     });
 
     // Handle changes for main filter
@@ -17,7 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const newState = toggleFilter.checked;
         console.log("Toggle changed to:", newState);
         
-        statusText.textContent = "Updating filter settings...";
+        showStatus("Updating filter settings...");
         
         // Update storage and notify content script
         chrome.storage.sync.set({ filterEnabled: newState }, () => {
@@ -28,11 +37,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 }, (response) => {
                     if (chrome.runtime.lastError) {
                         console.error("Error:", chrome.runtime.lastError);
-                        statusText.textContent = "Error updating settings";
+                        showStatus("Error updating settings", 3000);
                     } else {
-                        statusText.textContent = `Filtering ${newState ? 'enabled' : 'disabled'}`;
+                        const message = newState 
+                            ? "Filter enabled - Scroll through jobs to process them"
+                            : "Filter disabled - All jobs will be shown";
+                        showStatus(message, 3000);
                     }
-                    setTimeout(() => { statusText.textContent = ''; }, 2000);
                 });
             });
         });
