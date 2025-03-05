@@ -180,6 +180,47 @@
         #status.visible {
             opacity: 1;
         }
+
+        .stats-container {
+            margin-top: 16px;
+            padding: 12px;
+            background-color: #f0f4f8;
+            border-radius: 8px;
+            border: 1px solid #e0e6ed;
+        }
+
+        .stats-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .stat-box {
+            background-color: white;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #e0e6ed;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #718096;
+        }
     </style>
 </head>
 <body>
@@ -217,6 +258,20 @@
         <div class="legend-item">
             <div class="legend-icon no-sponsor">NO</div>
             <span>No recent H1B sponsorship found</span>
+        </div>
+    </div>
+
+    <div class="stats-container">
+        <div class="stats-title">Processing Statistics</div>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-value" id="totalJobs">0</div>
+                <div class="stat-label">Jobs Processed</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="sponsorCount">0</div>
+                <div class="stat-label">H1B Sponsors</div>
+            </div>
         </div>
     </div>
 

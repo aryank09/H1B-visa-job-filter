@@ -7,6 +7,10 @@
     let hideUnknown = false;
     let processedJobs = new Set();
     let isInitialized = false;
+    let stats = {
+        totalJobs: 0,
+        sponsorCount: 0
+    };
 
     // Create status overlay
     const overlay = document.createElement('div');
@@ -127,22 +131,36 @@
         }
     }
 
+    // Function to update statistics
+    function updateStats(isH1B) {
+        stats.totalJobs++;
+        if (isH1B) {
+            stats.sponsorCount++;
+        }
+        
+        // Store stats in local storage
+        chrome.storage.local.set({ processingStats: stats }, () => {
+            // Notify popup if it's open
+            chrome.runtime.sendMessage({
+                action: "statsUpdate",
+                stats: stats
+            }).catch(() => {}); // Ignore errors if popup is closed
+        });
+    }
+
     // Reset all job cards to their original state
     function resetJobCards() {
         console.log("🔄 Resetting all job cards to original state");
-        // Use a more comprehensive selector to find all job cards
         const jobCards = document.querySelectorAll('li[id^="ember"], .job-card-container, .jobs-search-results__list-item');
         console.log(`Found ${jobCards.length} cards to reset`);
         
         jobCards.forEach(card => {
             try {
-                // Remove any existing status indicators
                 const status = card.querySelector('.h1b-status');
                 if (status) {
                     status.remove();
                 }
                 
-                // Reset all styling completely
                 card.style.removeProperty('opacity');
                 card.style.removeProperty('display');
                 card.style.opacity = '1';
@@ -153,7 +171,9 @@
             }
         });
         
-        // Clear processed jobs set to allow reprocessing when re-enabled
+        // Reset statistics when filter is disabled
+        stats = { totalJobs: 0, sponsorCount: 0 };
+        chrome.storage.local.set({ processingStats: stats });
         processedJobs.clear();
         overlay.style.display = 'none';
         console.log("✅ Finished resetting all cards");
@@ -296,7 +316,7 @@
         overlay.style.display = 'none';
     }
 
-    function updateJobCard(card, companyName, isH1B) {
+    async function updateJobCard(card, companyName, isH1B) {
         // Remove any existing status indicators
         const existingStatus = card.querySelector('.h1b-status');
         if (existingStatus) {
@@ -309,6 +329,9 @@
             card.style.removeProperty('display');
             return;
         }
+
+        // Update statistics
+        updateStats(isH1B);
 
         // Create status indicator
         const status = document.createElement('div');
