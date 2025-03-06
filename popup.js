@@ -14,6 +14,9 @@
  * - Statistics will be displayed and updated
  * - Filter state will be managed and synchronized
  * 
+ * @author Aryan Khanna
+ * @version March 6, 2025
+ * 
  * @param none
  * @return none
  */

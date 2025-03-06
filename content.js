@@ -14,6 +14,9 @@
  * - Statistics will be updated and displayed
  * - UI elements will be created and managed
  * 
+ * @author Aryan Khanna
+ * @version March 6, 2025
+ * 
  * @param none
  * @return none
  */

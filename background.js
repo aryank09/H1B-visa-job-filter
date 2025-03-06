@@ -14,6 +14,9 @@
  * - Messages will be processed and routed
  * - Service worker will be registered and active
  * 
+ * @author Aryan Khanna
+ * @version March 6, 2025
+ * 
  * @param none
  * @return none
  */
