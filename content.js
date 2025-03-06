@@ -149,6 +149,17 @@
         });
     }
 
+    // Function to reset statistics
+    function resetStats() {
+        console.log("🔄 Resetting statistics");
+        stats = { totalJobs: 0, sponsorCount: 0 };
+        chrome.storage.local.set({ processingStats: stats });
+        chrome.runtime.sendMessage({
+            action: "statsUpdate",
+            stats: stats
+        }).catch(() => {}); // Ignore errors if popup is closed
+    }
+
     // Reset all job cards to their original state
     function resetJobCards() {
         console.log("🔄 Resetting all job cards to original state");
@@ -172,9 +183,7 @@
             }
         });
         
-        // Reset statistics when filter is disabled
-        stats = { totalJobs: 0, sponsorCount: 0 };
-        chrome.storage.local.set({ processingStats: stats });
+        resetStats();
         processedJobs.clear();
         overlay.style.display = 'none';
         console.log("✅ Finished resetting all cards");
@@ -233,12 +242,15 @@
             return;
         }
 
+        // Reset stats when starting to process new jobs
+        resetStats();
+        
         console.log(`📋 Found ${jobCards.length} job cards to process`);
         overlay.style.display = 'block';
         overlay.textContent = 'Processing visible jobs...';
         
         let processedCount = 0;
-        const totalCards = jobCards.length;
+        const totalCards = Math.min(jobCards.length, 25); // LinkedIn shows max 25 jobs per page
         
         for (const card of jobCards) {
             if (processedJobs.has(card.id)) {
@@ -312,7 +324,7 @@
             }
         }
 
-        overlay.textContent = `✅ Completed processing ${processedCount} jobs`;
+        overlay.textContent = `✅ Completed processing ${Math.min(processedCount, 25)} jobs`;
         await sleep(2000);
         overlay.style.display = 'none';
     }

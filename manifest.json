@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Fastrack H1B",
+  "name": "H1B FastFilter",
   "version": "1.0",
   "description": "Checks if a company is sponsoring H1B visas based on job listings.",
   "permissions": [
