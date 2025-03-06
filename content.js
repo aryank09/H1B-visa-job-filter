@@ -47,12 +47,13 @@
 
     // Initialize settings from storage and start processing
     function initialize() {
+        console.log("🔄 Initializing extension");
         chrome.storage.sync.get(["filterEnabled"], (data) => {
             console.log("📥 Loaded storage settings:", data);
             filterEnabled = data.filterEnabled !== undefined ? data.filterEnabled : true;
             isInitialized = true;
-            startProcessing();
             setupObservers();
+            startProcessing();
         });
     }
 
@@ -67,6 +68,8 @@
 
     // Setup mutation observers
     function setupObservers() {
+        console.log("🔍 Setting up observers");
+        
         // Observer for the job list container
         const jobListObserver = new MutationObserver((mutations) => {
             if (!filterEnabled || !isInitialized) return;
@@ -516,11 +519,46 @@
         isAutoScrolling = false;
     }
 
-    // Initialize on load
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initialize);
-    } else {
+    // Initialize immediately if we're on a jobs page
+    if (window.location.href.includes('/jobs/')) {
+        console.log("🎯 On jobs page, initializing immediately");
         initialize();
     }
+
+    // Also initialize when the page is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("📄 DOM Content Loaded, checking if we need to initialize");
+            if (window.location.href.includes('/jobs/')) {
+                initialize();
+            }
+        });
+    } else {
+        console.log("📄 Document already loaded, checking if we need to initialize");
+        if (window.location.href.includes('/jobs/')) {
+            initialize();
+        }
+    }
+
+    // Listen for navigation events
+    window.addEventListener('popstate', () => {
+        console.log("🔄 Navigation event detected");
+        if (window.location.href.includes('/jobs/')) {
+            initialize();
+        }
+    });
+
+    // Listen for URL changes
+    let lastUrl = window.location.href;
+    new MutationObserver(() => {
+        const url = window.location.href;
+        if (url !== lastUrl) {
+            lastUrl = url;
+            console.log("🔄 URL changed, checking if we need to initialize");
+            if (url.includes('/jobs/')) {
+                initialize();
+            }
+        }
+    }).observe(document, { subtree: true, childList: true });
 
 })();
