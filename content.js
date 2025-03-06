@@ -11,6 +11,7 @@
         totalJobs: 0,
         sponsorCount: 0
     };
+    let isAutoScrolling = false;
 
     // Create status overlay
     const overlay = document.createElement('div');
@@ -381,6 +382,126 @@
             // Fallback: insert at the beginning of the card
             card.insertBefore(status, card.firstChild);
         }
+    }
+
+    // Function to auto-scroll through job listings
+    async function autoScrollJobListings() {
+        if (isAutoScrolling) return;
+        isAutoScrolling = true;
+
+        console.log("🔄 Starting auto-scroll through job listings");
+        overlay.style.display = 'block';
+        overlay.textContent = 'Loading all job listings...';
+
+        // Find the job list container
+        const jobListContainer = document.querySelector('.jobs-search-results-list') || 
+                                document.querySelector('.jobs-search-results__list') ||
+                                document.querySelector('.jobs-search-two-pane__wrapper');
+
+        if (!jobListContainer) {
+            console.error("❌ Could not find job list container");
+            overlay.textContent = "Error: Please refresh the page and try again";
+            isAutoScrolling = false;
+            return;
+        }
+
+        console.log("✅ Found job list container");
+
+        // Wait for initial job cards
+        let attempts = 0;
+        const maxAttempts = 10;
+        let initialJobCards = null;
+
+        while (!initialJobCards && attempts < maxAttempts) {
+            initialJobCards = jobListContainer.querySelectorAll('li[id^="ember"]');
+            if (!initialJobCards.length) {
+                console.log(`Waiting for job cards... Attempt ${attempts + 1}/${maxAttempts}`);
+                await sleep(1000);
+                attempts++;
+            }
+        }
+
+        if (!initialJobCards || !initialJobCards.length) {
+            console.error("❌ Could not find job cards after waiting");
+            overlay.textContent = "Error: Please refresh the page and try again";
+            isAutoScrolling = false;
+            return;
+        }
+
+        console.log(`✅ Found ${initialJobCards.length} initial job cards`);
+
+        let lastJobCount = 0;
+        let sameJobCount = 0;
+        let maxScrollAttempts = 15;
+        let scrollAttempts = 0;
+        let processedJobIds = new Set();
+
+        while (scrollAttempts < maxScrollAttempts) {
+            // Get current job count from the container only
+            const currentJobCards = Array.from(jobListContainer.querySelectorAll('li[id^="ember"]'))
+                .filter(card => !processedJobIds.has(card.id));
+            
+            const currentJobCount = currentJobCards.length;
+            
+            console.log(`Current new job count: ${currentJobCount}, Previous: ${lastJobCount}`);
+
+            // Check if job count has stopped increasing
+            if (currentJobCount === lastJobCount) {
+                sameJobCount++;
+                if (sameJobCount >= 3) {
+                    console.log("✅ Reached end of job listings");
+                    break;
+                }
+            } else {
+                sameJobCount = 0;
+            }
+            
+            lastJobCount = currentJobCount;
+
+            // Scroll the job list container
+            try {
+                // Store current scroll position
+                const currentScroll = jobListContainer.scrollTop;
+                
+                // Scroll down by a fixed amount
+                jobListContainer.scrollTop = currentScroll + 800;
+                
+                // Wait for scroll to complete
+                await sleep(1000);
+                
+                // If scroll didn't work, try alternative method
+                if (jobListContainer.scrollTop === currentScroll) {
+                    console.log("Primary scroll failed, trying alternative method");
+                    const lastCard = currentJobCards[currentJobCards.length - 1];
+                    if (lastCard) {
+                        lastCard.scrollIntoView({ behavior: 'auto', block: 'end' });
+                        await sleep(1000);
+                    }
+                }
+            } catch (error) {
+                console.log("Scroll failed:", error);
+                // Fallback to window scroll
+                window.scrollBy(0, 800);
+                await sleep(1000);
+            }
+
+            // Wait for content to load
+            await sleep(1500);
+            
+            // Process visible jobs
+            await processJobListings();
+            
+            // Update processed job IDs
+            currentJobCards.forEach(card => processedJobIds.add(card.id));
+            
+            scrollAttempts++;
+            overlay.textContent = `Loading jobs... (${processedJobIds.size} total jobs found, Attempt ${scrollAttempts}/${maxScrollAttempts})`;
+        }
+
+        overlay.textContent = `✅ Finished loading ${processedJobIds.size} jobs`;
+        await sleep(2000);
+        overlay.style.display = 'none';
+        isAutoScrolling = false;
     }
 
     // Initialize on load
