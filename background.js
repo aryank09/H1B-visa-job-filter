@@ -1,3 +1,23 @@
+/**
+ * Background Script for H1B FastFilter
+ * 
+ * Description: This script handles background tasks for the extension, including
+ * cache management, message handling, and service worker functionality.
+ * 
+ * PRE-CONDITIONS: 
+ * - The extension must be installed and enabled
+ * - Chrome extension APIs must be available
+ * - Storage permissions must be granted
+ * 
+ * POST-CONDITIONS: 
+ * - Cache will be initialized and managed
+ * - Messages will be processed and routed
+ * - Service worker will be registered and active
+ * 
+ * @param none
+ * @return none
+ */
+
 // Cache configuration
 const CACHE_EXPIRY_DAYS = 7;
 const MAX_CACHE_ITEMS = 1000;
@@ -27,7 +47,22 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(clients.claim());
 });
 
-// Setup periodic cache cleanup
+/**
+ * setupPeriodicCacheCleanup
+ * 
+ * Description: Sets up periodic cleanup of the extension's cache.
+ * 
+ * PRE-CONDITIONS: 
+ * - Cache configuration constants must be defined
+ * - Chrome storage API must be available
+ * 
+ * POST-CONDITIONS: 
+ * - Cache cleanup will be scheduled
+ * - Initial cleanup will be performed
+ * 
+ * @param none
+ * @return none
+ */
 function setupPeriodicCacheCleanup() {
     console.log('Setting up periodic cache cleanup');
     
@@ -111,6 +146,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 });
 
+/**
+ * handleH1BDataFetch
+ * 
+ * Description: Handles requests to fetch H1B data for a company.
+ * 
+ * PRE-CONDITIONS: 
+ * - Company name must be provided
+ * - Cache must be initialized
+ * - API must be accessible
+ * 
+ * POST-CONDITIONS: 
+ * - Company H1B status will be determined
+ * - Cache will be updated
+ * - Response will be sent back to content script
+ * 
+ * @param {string} company - The company name to check
+ * @param {Function} sendResponse - Callback function to send response
+ * @return none
+ */
 async function handleH1BDataFetch(company, sendResponse) {
     try {
         console.log('🚀 handleH1BDataFetch STARTED for company:', company);
@@ -176,6 +230,21 @@ async function handleToggleFiltering(enabled, sendResponse) {
     }
 }
 
+/**
+ * validityChecker
+ * 
+ * Description: Checks if a company has sponsored H1B visas recently.
+ * 
+ * PRE-CONDITIONS: 
+ * - Company name must be provided
+ * - API must be accessible
+ * 
+ * POST-CONDITIONS: 
+ * - Company's H1B sponsorship status will be determined
+ * 
+ * @param {string} companyName - The company name to check
+ * @return {Promise<boolean>} - Whether the company sponsors H1B visas
+ */
 async function validityChecker(companyName) {
     try {
         console.log('🔍 Starting validity check for company:', companyName);
@@ -283,6 +352,23 @@ async function validityChecker(companyName) {
     }
 }
 
+/**
+ * updateCache
+ * 
+ * Description: Updates the extension's cache with new company data.
+ * 
+ * PRE-CONDITIONS: 
+ * - Company name and H1B status must be provided
+ * - Cache must be initialized
+ * 
+ * POST-CONDITIONS: 
+ * - Cache will be updated with new data
+ * - Cache size will be managed
+ * 
+ * @param {string} company - The company name
+ * @param {boolean} isH1B - Whether the company sponsors H1B visas
+ * @return {Promise<void>}
+ */
 async function updateCache(company, isH1B) {
     try {
         const cache = await chrome.storage.local.get("companyStatusCache");
@@ -313,6 +399,22 @@ async function updateCache(company, isH1B) {
     }
 }
 
+/**
+ * cleanCache
+ * 
+ * Description: Cleans expired items from the extension's cache.
+ * 
+ * PRE-CONDITIONS: 
+ * - Cache must be initialized
+ * - Cache configuration must be defined
+ * 
+ * POST-CONDITIONS: 
+ * - Expired items will be removed
+ * - Cache size will be maintained within limits
+ * 
+ * @param none
+ * @return {Promise<void>}
+ */
 async function cleanCache() {
     try {
         const cache = await chrome.storage.local.get("companyStatusCache");

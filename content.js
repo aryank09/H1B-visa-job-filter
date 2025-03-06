@@ -1,3 +1,22 @@
+/**
+ * Content Script for H1B FastFilter
+ * 
+ * Description: This script handles the main functionality of the H1B FastFilter extension,
+ * including job processing, UI updates, and state management.
+ * 
+ * PRE-CONDITIONS: 
+ * - The script must be loaded on a LinkedIn jobs page
+ * - Chrome extension APIs must be available
+ * - The page must have job listings loaded
+ * 
+ * POST-CONDITIONS: 
+ * - Job listings will be processed and marked with H1B status
+ * - Statistics will be updated and displayed
+ * - UI elements will be created and managed
+ * 
+ * @param none
+ * @return none
+ */
 (function () {
     'use strict';
 
@@ -37,7 +56,22 @@
     // Function to sleep/delay
     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-    // Function to start processing
+    /**
+     * startProcessing
+     * 
+     * Description: Initiates the job processing workflow if filtering is enabled.
+     * 
+     * PRE-CONDITIONS: 
+     * - filterEnabled must be set
+     * - The page must be a LinkedIn jobs page
+     * 
+     * POST-CONDITIONS: 
+     * - Job listings will be processed if filtering is enabled
+     * - Statistics will be updated
+     * 
+     * @param none
+     * @return none
+     */
     async function startProcessing() {
         console.log("🔄 Starting job processing with settings:", { filterEnabled });
         if (filterEnabled) {
@@ -45,7 +79,23 @@
         }
     }
 
-    // Initialize settings from storage and start processing
+    /**
+     * initialize
+     * 
+     * Description: Initializes the extension by loading settings and setting up observers.
+     * 
+     * PRE-CONDITIONS: 
+     * - Chrome storage API must be available
+     * - The page must be a LinkedIn jobs page
+     * 
+     * POST-CONDITIONS: 
+     * - Extension settings will be loaded
+     * - Observers will be set up
+     * - Job processing will begin if enabled
+     * 
+     * @param none
+     * @return none
+     */
     function initialize() {
         console.log("🔄 Initializing extension");
         chrome.storage.sync.get(["filterEnabled"], (data) => {
@@ -57,7 +107,20 @@
         });
     }
 
-    // Function to check if an element is a job container
+    /**
+     * isJobContainer
+     * 
+     * Description: Checks if a given node is a container for job listings.
+     * 
+     * PRE-CONDITIONS: 
+     * - The node must be a DOM element
+     * 
+     * POST-CONDITIONS: 
+     * - Returns boolean indicating if node is a job container
+     * 
+     * @param {Node} node - The DOM node to check
+     * @return {boolean} - True if the node is a job container
+     */
     function isJobContainer(node) {
         return node.nodeType === 1 && (
             node.classList?.contains('jobs-search-results-list') ||
@@ -66,7 +129,22 @@
         );
     }
 
-    // Setup mutation observers
+    /**
+     * setupObservers
+     * 
+     * Description: Sets up mutation observers to monitor for changes in job listings.
+     * 
+     * PRE-CONDITIONS: 
+     * - filterEnabled must be set
+     * - isInitialized must be true
+     * 
+     * POST-CONDITIONS: 
+     * - Observers will be active and monitoring for changes
+     * - Job listings will be processed when changes are detected
+     * 
+     * @param none
+     * @return none
+     */
     function setupObservers() {
         console.log("🔍 Setting up observers");
         
@@ -332,6 +410,26 @@
         overlay.style.display = 'none';
     }
 
+    /**
+     * updateJobCard
+     * 
+     * Description: Updates a job card with H1B sponsorship status and visual indicators.
+     * 
+     * PRE-CONDITIONS: 
+     * - The card must be a valid DOM element
+     * - Company name must be provided
+     * - H1B status must be determined
+     * 
+     * POST-CONDITIONS: 
+     * - Job card will be updated with status indicator
+     * - Statistics will be updated
+     * - Visual styling will be applied
+     * 
+     * @param {Element} card - The job card DOM element
+     * @param {string} companyName - The name of the company
+     * @param {boolean} isH1B - Whether the company sponsors H1B visas
+     * @return none
+     */
     async function updateJobCard(card, companyName, isH1B) {
         // Remove any existing status indicators
         const existingStatus = card.querySelector('.h1b-status');
