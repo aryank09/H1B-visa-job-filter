@@ -10,10 +10,6 @@
       "declarativeNetRequest",
       "tabs"
   ],
-  "host_permissions": [
-      "https://www.linkedin.com/*",
-      "https://h1bdata.info/*"
-  ],
   "background": {
       "service_worker": "background.js",
       "type": "module"
