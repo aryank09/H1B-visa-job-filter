@@ -10,6 +10,9 @@
       "declarativeNetRequest",
       "tabs"
   ],
+  "host_permissions": [
+      "https://h1bdata.info/*"
+  ],
   "background": {
       "service_worker": "background.js",
       "type": "module"
