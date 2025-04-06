@@ -300,38 +300,43 @@
 
     // Update processJobListings to handle visible jobs only
     async function processJobListings() {
-        
         // Get visible job cards
         const jobCards = document.querySelectorAll('li[id^="ember"]');
-        
+    
         if (jobCards.length === 0) {
             return;
         }
-
+    
         // Reset stats when starting to process new jobs
         resetStats();
-        
+    
         overlay.style.display = 'block';
         overlay.textContent = 'Processing visible jobs...';
-        
+    
         let processedCount = 0;
         const totalCards = Math.min(jobCards.length, 25); // LinkedIn shows max 25 jobs per page
-        
+    
         for (const card of jobCards) {
+            // Skip if already processed
             if (processedJobs.has(card.id)) {
                 continue;
             }
-            
+    
+            // Skip if inside footer
+            if (card.closest('#job-search-results-footer')) {
+                continue;
+            }
+    
             try {
                 processedCount++;
-
+    
                 // Try to find company name using the most reliable selector first
                 const companyNameElement = 
                     card.querySelector('.job-card-container__company-name') ||
                     card.querySelector('.job-card-container__primary-description') ||
                     card.querySelector('.company-name') ||
                     card.querySelector('.artdeco-entity-lockup__subtitle');
-
+    
                 let companyName = '';
                 if (companyNameElement) {
                     companyName = companyNameElement.textContent.trim();
@@ -356,36 +361,38 @@
                         break;
                     }
                 }
-
+    
                 if (!companyName) {
                     continue;
                 }
-
+    
                 processedJobs.add(card.id);
                 overlay.innerHTML = `Processing: ${companyName}<br><small>Progress: ${processedCount}/${totalCards} jobs</small>`;
-                
+    
                 const response = await new Promise(resolve => {
                     chrome.runtime.sendMessage(
                         { action: "fetchH1BData", company: companyName },
                         resolve
                     );
                 });
-
+    
                 if (!response.success) {
                     continue;
                 }
-
+    
                 updateJobCard(card, companyName, response.isH1B);
                 await sleep(200);
-
+    
             } catch (error) {
+                // Optional: console.error('Error processing job card:', error);
             }
         }
-
+    
         overlay.textContent = `✅ Completed processing ${Math.min(processedCount, 25)} jobs`;
         await sleep(2000);
         overlay.style.display = 'none';
     }
+    
 
     /**
      * updateJobCard
