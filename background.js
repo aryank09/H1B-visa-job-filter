@@ -172,7 +172,6 @@ async function handleH1BDataFetch(company, sendResponse) {
                 return;
             }
         } else {
-            console.log('🔄 Cache version mismatch or missing, fetching fresh data');
         }
 
         // If not in cache or expired, fetch new data
@@ -182,8 +181,6 @@ async function handleH1BDataFetch(company, sendResponse) {
         await updateCache(company, isH1B);
         sendResponse({ success: true, isH1B: isH1B });
     } catch (error) {
-        console.error("❌ Error in handleH1BDataFetch:", error);
-        console.error('Stack trace:', error.stack);
         sendResponse({ success: false, error: error.message });
     }
 }
@@ -199,12 +196,10 @@ async function handleToggleFiltering(enabled, sendResponse) {
                     enabled: enabled
                 });
             } catch (e) {
-                console.log(`Tab ${tab.id} not ready for message`);
             }
         }
         sendResponse({ success: true });
     } catch (error) {
-        console.error("Error toggling filtering:", error);
         sendResponse({ success: false, error: error.message });
     }
 }
@@ -350,7 +345,6 @@ async function updateCache(company, isH1B) {
             await chrome.storage.local.set({ companyStatusCache: currentCache });
         }
     } catch (error) {
-        console.error("Error updating cache:", error);
     }
 }
 
@@ -397,6 +391,5 @@ async function cleanCache() {
             }
         });
     } catch (error) {
-        console.error("Error cleaning cache:", error);
     }
 }

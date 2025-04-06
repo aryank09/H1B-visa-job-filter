@@ -76,7 +76,6 @@
      * @return none
      */
     async function startProcessing() {
-        console.log("🔄 Starting job processing with settings:", { filterEnabled });
         if (filterEnabled) {
             await processJobListings();
         }
@@ -100,9 +99,7 @@
      * @return none
      */
     function initialize() {
-        console.log("🔄 Initializing extension");
         chrome.storage.sync.get(["filterEnabled"], (data) => {
-            console.log("📥 Loaded storage settings:", data);
             filterEnabled = data.filterEnabled !== undefined ? data.filterEnabled : true;
             isInitialized = true;
             setupObservers();
@@ -256,7 +253,6 @@
                 card.style.opacity = '1';
                 
             } catch (error) {
-                console.error('Error resetting card:', error);
             }
         });
         

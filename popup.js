@@ -99,7 +99,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     enabled: newState
                 }, (response) => {
                     if (chrome.runtime.lastError) {
-                        console.error("Error:", chrome.runtime.lastError);
                         showStatus("Error updating settings", 3000);
                     } else {
                         const message = newState 
