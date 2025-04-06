@@ -78,7 +78,6 @@ document.addEventListener("DOMContentLoaded", function () {
     chrome.storage.sync.get("filterEnabled", (data) => {
         const isEnabled = data.filterEnabled ?? false;
         toggleFilter.checked = isEnabled;
-        console.log("Initial filter state:", isEnabled);
         
         if (isEnabled) {
             showStatus("Filter is active - Scroll through jobs to process them", 3000);
@@ -89,7 +88,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // Handle changes for main filter
     toggleFilter.addEventListener("change", function () {
         const newState = toggleFilter.checked;
-        console.log("Toggle changed to:", newState);
         
         showStatus("Updating filter settings...");
         
