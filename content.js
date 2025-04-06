@@ -149,7 +149,6 @@
      * @return none
      */
     function setupObservers() {
-        console.log("🔍 Setting up observers");
         
         // Observer for the job list container
         const jobListObserver = new MutationObserver((mutations) => {
@@ -168,7 +167,6 @@
             });
 
             if (shouldProcess) {
-                console.log("🔄 Detected new job listings");
                 processJobListings();
             }
         });
@@ -182,7 +180,6 @@
                     .filter(node => isJobContainer(node));
 
                 if (jobContainers.length > 0) {
-                    console.log("🔍 Found job container, setting up observers");
                     jobContainers.forEach(container => {
                         jobListObserver.observe(container, {
                             childList: true,
@@ -235,7 +232,6 @@
 
     // Function to reset statistics
     function resetStats() {
-        console.log("🔄 Resetting statistics");
         stats = { totalJobs: 0, sponsorCount: 0 };
         chrome.storage.local.set({ processingStats: stats });
         chrome.runtime.sendMessage({
@@ -246,9 +242,7 @@
 
     // Reset all job cards to their original state
     function resetJobCards() {
-        console.log("🔄 Resetting all job cards to original state");
         const jobCards = document.querySelectorAll('li[id^="ember"], .job-card-container, .jobs-search-results__list-item');
-        console.log(`Found ${jobCards.length} cards to reset`);
         
         jobCards.forEach(card => {
             try {
@@ -261,7 +255,6 @@
                 card.style.removeProperty('display');
                 card.style.opacity = '1';
                 
-                console.log(`Reset card: ${card.id || 'unnamed card'}`);
             } catch (error) {
                 console.error('Error resetting card:', error);
             }
@@ -270,15 +263,12 @@
         resetStats();
         processedJobs.clear();
         overlay.style.display = 'none';
-        console.log("✅ Finished resetting all cards");
     }
 
     // Listen for messages from background script
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        console.log("📨 Received message:", message);
         
         if (message.action === "initializeState") {
-            console.log("🔧 Initializing state with:", message);
             filterEnabled = message.filterEnabled;
             isInitialized = true;
             if (filterEnabled) {
@@ -292,7 +282,6 @@
         }
 
         if (message.action === "updateFilterState") {
-            console.log("🔄 Updating filter state:", message.enabled);
             filterEnabled = message.enabled;
             if (filterEnabled) {
                 startProcessing();
@@ -304,7 +293,6 @@
         }
 
         if (message.action === "updateDatabaseFilter") {
-            console.log("🔄 Updating database filter:", message.hide);
             hideUnknown = message.hide;
             if (filterEnabled) {
                 processJobListings();
@@ -316,20 +304,17 @@
 
     // Update processJobListings to handle visible jobs only
     async function processJobListings() {
-        console.log("🔍 Starting to process visible job listings");
         
         // Get visible job cards
         const jobCards = document.querySelectorAll('li[id^="ember"]');
         
         if (jobCards.length === 0) {
-            console.log("⚠️ No job cards found");
             return;
         }
 
         // Reset stats when starting to process new jobs
         resetStats();
         
-        console.log(`📋 Found ${jobCards.length} job cards to process`);
         overlay.style.display = 'block';
         overlay.textContent = 'Processing visible jobs...';
         
@@ -338,13 +323,11 @@
         
         for (const card of jobCards) {
             if (processedJobs.has(card.id)) {
-                console.log(`Skipping already processed card: ${card.id}`);
                 continue;
             }
             
             try {
                 processedCount++;
-                console.log(`Processing card ${processedCount}/${totalCards}:`, card.id);
 
                 // Try to find company name using the most reliable selector first
                 const companyNameElement = 
@@ -356,7 +339,6 @@
                 let companyName = '';
                 if (companyNameElement) {
                     companyName = companyNameElement.textContent.trim();
-                    console.log(`Found company name using direct selector: "${companyName}"`);
                 } else {
                     // Fallback to span search if direct selectors fail
                     const spans = card.querySelectorAll('span');
@@ -375,13 +357,11 @@
                             continue;
                         }
                         companyName = text;
-                        console.log(`Found company name in span: "${companyName}"`);
                         break;
                     }
                 }
 
                 if (!companyName) {
-                    console.log("⚠️ No valid company name found in card:", card.id);
                     continue;
                 }
 
@@ -396,7 +376,6 @@
                 });
 
                 if (!response.success) {
-                    console.error(`❌ Error checking ${companyName}:`, response.error);
                     continue;
                 }
 
@@ -404,7 +383,6 @@
                 await sleep(200);
 
             } catch (error) {
-                console.error('❌ Error processing job card:', error);
             }
         }
 
@@ -494,7 +472,6 @@
         }
 
         if (!inserted) {
-            console.log(`⚠️ Could not find insertion point for status in card for ${companyName}`);
             // Fallback: insert at the beginning of the card
             card.insertBefore(status, card.firstChild);
         }
@@ -505,7 +482,6 @@
         if (isAutoScrolling) return;
         isAutoScrolling = true;
 
-        console.log("🔄 Starting auto-scroll through job listings");
         overlay.style.display = 'block';
         overlay.textContent = 'Loading all job listings...';
 
@@ -515,13 +491,11 @@
                                 document.querySelector('.jobs-search-two-pane__wrapper');
 
         if (!jobListContainer) {
-            console.error("❌ Could not find job list container");
             overlay.textContent = "Error: Please refresh the page and try again";
             isAutoScrolling = false;
             return;
         }
 
-        console.log("✅ Found job list container");
 
         // Wait for initial job cards
         let attempts = 0;
@@ -531,20 +505,17 @@
         while (!initialJobCards && attempts < maxAttempts) {
             initialJobCards = jobListContainer.querySelectorAll('li[id^="ember"]');
             if (!initialJobCards.length) {
-                console.log(`Waiting for job cards... Attempt ${attempts + 1}/${maxAttempts}`);
                 await sleep(1000);
                 attempts++;
             }
         }
 
         if (!initialJobCards || !initialJobCards.length) {
-            console.error("❌ Could not find job cards after waiting");
             overlay.textContent = "Error: Please refresh the page and try again";
             isAutoScrolling = false;
             return;
         }
 
-        console.log(`✅ Found ${initialJobCards.length} initial job cards`);
 
         let lastJobCount = 0;
         let sameJobCount = 0;
@@ -559,13 +530,11 @@
             
             const currentJobCount = currentJobCards.length;
             
-            console.log(`Current new job count: ${currentJobCount}, Previous: ${lastJobCount}`);
 
             // Check if job count has stopped increasing
             if (currentJobCount === lastJobCount) {
                 sameJobCount++;
                 if (sameJobCount >= 3) {
-                    console.log("✅ Reached end of job listings");
                     break;
                 }
             } else {
@@ -587,7 +556,6 @@
                 
                 // If scroll didn't work, try alternative method
                 if (jobListContainer.scrollTop === currentScroll) {
-                    console.log("Primary scroll failed, trying alternative method");
                     const lastCard = currentJobCards[currentJobCards.length - 1];
                     if (lastCard) {
                         lastCard.scrollIntoView({ behavior: 'auto', block: 'end' });
@@ -595,7 +563,6 @@
                     }
                 }
             } catch (error) {
-                console.log("Scroll failed:", error);
                 // Fallback to window scroll
                 window.scrollBy(0, 800);
                 await sleep(1000);
@@ -622,20 +589,17 @@
 
     // Initialize immediately if we're on a jobs page
     if (window.location.href.includes('/jobs/')) {
-        console.log("🎯 On jobs page, initializing immediately");
         initialize();
     }
 
     // Also initialize when the page is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("📄 DOM Content Loaded, checking if we need to initialize");
             if (window.location.href.includes('/jobs/')) {
                 initialize();
             }
         });
     } else {
-        console.log("📄 Document already loaded, checking if we need to initialize");
         if (window.location.href.includes('/jobs/')) {
             initialize();
         }
@@ -643,7 +607,6 @@
 
     // Listen for navigation events
     window.addEventListener('popstate', () => {
-        console.log("🔄 Navigation event detected");
         if (window.location.href.includes('/jobs/')) {
             initialize();
         }
@@ -655,7 +618,6 @@
         const url = window.location.href;
         if (url !== lastUrl) {
             lastUrl = url;
-            console.log("🔄 URL changed, checking if we need to initialize");
             if (url.includes('/jobs/')) {
                 initialize();
             }
