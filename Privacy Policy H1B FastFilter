@@ -1,0 +1,53 @@
+# Privacy Policy for H1B FastFilter Chrome Extension
+
+**Effective Date:** April 6, 2025
+
+## Overview
+H1B FastFilter is a Chrome extension designed to help job seekers efficiently filter LinkedIn job listings based on companies' H1B visa sponsorship history. Your privacy is important to us. 
+
+## Data Collection and Usage
+
+### What We Collect
+H1B FastFilter **does not collect or store any personal user data**. The only data the extension processes is directly related to the job listings you view on LinkedIn, specifically:
+
+- **Company Names**: Extracted from job listings to check for H1B visa sponsorship history.
+- **H1B Sponsorship Status**: Retrieved from a h1bdata.info to determine whether a company has recently filed H1B petitions.
+- **Local Cache Data**: Stored in your browser to remember previously checked companies for faster processing.
+
+### What We Do Not Collect
+H1B FastFilter does **not** collect, access, or store the following:
+- Personally identifiable information (e.g., name, email, age)
+- Health information
+- Financial or payment information
+- Passwords or authentication data
+- Personal communications (e.g., messages, emails)
+- Location data (e.g., IP address, GPS)
+- Web browsing history beyond the current LinkedIn job listings page
+- User activity such as mouse movement, keystrokes, or clicks
+
+## Data Storage
+All data used by H1B FastFilter is stored **locally in your browser** using Chrome’s `storage` API. This means no data is transmitted to any external servers, and your browsing activity remains private.
+
+## Permissions
+H1B FastFilter requests the following Chrome extension permissions:
+
+- **activeTab**: To access the contents of the currently active LinkedIn jobs page.
+- **tabs**: To monitor changes in tab content for real-time job processing.
+- **scripting**: To inject scripts that analyze and annotate job listings.
+- **storage**: To cache results for improved performance and user experience.
+- **declarativeNetRequest**: To manage CORS policies when needed.
+- **Host permissions** (LinkedIn and H1B data sources): Required to analyze job postings and verify sponsorship history.
+
+These permissions are used **solely** to provide the extension’s core functionality. No data is sold, shared, or used for tracking purposes.
+
+## Third-Party Access
+H1B FastFilter does **not** share any data with third parties. It also does not load or execute any remote code from external servers.
+
+## User Control
+Users can enable or disable the extension at any time using the extension popup. The cached data can be cleared by removing the extension or resetting the cache within the popup.
+
+## Changes to This Policy
+We may update this Privacy Policy from time to time. Any changes will be reflected on this page and will be clearly marked with an updated effective date.
+
+## Contact
+If you have any questions or concerns about this Privacy Policy or the extension’s data practices, please contact us via the GitHub Issues page or through the support channel listed on the Chrome Web Store listing.
