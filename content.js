@@ -323,7 +323,7 @@
             }
     
             // Skip if inside footer
-            if (card.closest('#job-search-results-footer')) {
+            if (card.closest('[id*="footer"]')) {
                 continue;
             }
     
